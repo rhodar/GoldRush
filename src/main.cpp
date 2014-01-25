@@ -6,14 +6,24 @@
  */
 
 #include <cstdlib>
-
+#include "Mine/Mine.h"
+#include <iostream>
+#include "Mine/Utils.h"
 using namespace std;
 
 /*
  * 
  */
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv)
+{
+    string name = "SuperMonchu";
+    // give the minor name
+    cout << name << "\n";
+    log("Minor :" + name + " join the game");
+    // init map
+    Mine myMine;
+    myMine.Init();
+    myMine.runRound();
     return 0;
 }
 
