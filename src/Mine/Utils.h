@@ -9,7 +9,10 @@
 #define	UTILS_H
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include<string>
+
+#include "Positionable.h"
 
 #define TROLLEY_SIGNE "X"
 #define MUD_SIGNE "M"
@@ -17,25 +20,25 @@
 #define EMPTY_SIGNE "E"
 
 typedef enum {
-    DIR_NONE,
     DIR_NORTH,
     DIR_EAST,
     DIR_SOUTH,
-    DIR_WEST
+    DIR_WEST,
+    DIR_NONE
 } direction;
 
 typedef enum {
-    OBJ_DIAMANDS,// we don't yet have 3 diamands in our pocket
+    OBJ_DIAMANDS, // we don't yet have 3 diamands in our pocket
     OBJ_TROLLEY, // we have 3 diamands in our pocket
-    OBJ_TARGET,  // we are looking for a target to shoot
-    OBJ_MUD,     // we can't do any thing
+    OBJ_TARGET, // we are looking for a target to shoot
+    OBJ_STONE, // we can't do anything so we're lookong to a stone to moove
     OBJ_INACTIVE // find out inactive case to be refreshed  
 } objectives;
 
 static void log(string message) {
     ofstream myfile;
     myfile.open("SuperLog.log", ios::app);
-    myfile <<__FILE__ << "(" <<__LINE__ << ") : " << message << "\n";
+    myfile << message << "\n";
     myfile.close();
 }
 
@@ -85,6 +88,45 @@ static direction getOpositeDirection(direction initialDirection) {
     return ret;
 }
 
+static vector<string> ParseMessage(string input)
+{
+    vector<string> parsedMsg;
+    string parsed;
+    stringstream ss(input);
+    while (getline(ss, parsed, ' '))
+    {
+        parsedMsg.push_back(parsed);
+    }
+    return parsedMsg;
+}
+
+static Positionable backTraceTravel(direction dir, int x, int y)
+{
+    Positionable ret;
+    // set with current position
+    ret.setPosition(x , y);
+       
+    switch (dir)
+    {
+    case DIR_EAST:
+        ret.setPosition(ret.getPositionX()+1,ret.getPositionY());
+        break;
+    case DIR_WEST:
+        ret.setPosition(ret.getPositionX()-1,ret.getPositionY());
+        break;
+    case DIR_SOUTH:
+        ret.setPosition(ret.getPositionX(),ret.getPositionY()+1);
+        break;
+    case DIR_NORTH:
+        ret.setPosition(ret.getPositionX(),ret.getPositionY()-1);
+        break;
+    default:
+        
+        break;
+    }
+ 
+    return ret;
+}
 
 #endif	/* UTILS_H */
 

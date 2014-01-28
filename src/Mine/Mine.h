@@ -52,7 +52,6 @@ private:
     void RefreshMapData(vector<string> mapDetails);
     void ResetMapScore();
     map< int, map< int, MineElement* > > _mineMap;
-    vector<string> ParseMessage(string input);
     int getRatio(int input);
     
     vector<string> getMapDetails();
@@ -61,8 +60,14 @@ private:
     bool findDiamand();
     bool findTrolley();
     bool findTarget();
-    bool findMud();
     bool findInactive();
+    bool findStoneToMove();
+    direction expectedNextStep();
+    //decode string input from cin
+    bool initMineMap(vector<string> vec);
+    
+    void DisplayMap();
+    direction _nextStep;
 };
 
 #endif	/* MINE_H */

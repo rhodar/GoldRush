@@ -30,15 +30,15 @@ struct Status {
 class MineElement :
 public Positionable {
 public:
-    MineElement(string name);
+    MineElement();
     virtual ~MineElement();
     Status _myStatus;
-    string _name;
-    bool askNeighbours(direction from, objectives obj = OBJ_DIAMANDS);
+    bool askNeighbours(direction from, objectives obj, direction prior=DIR_NONE);
     void reset();
     void refresh(string gender, int turn, int diamand);
     void registerNeighbour(MineElement* element, direction where);
     void setEnnemies();
+    string getGender(){return _gender;};
     bool isTheTrolley;
 private:
     map<int, MineElement*> _neighbours;
@@ -48,10 +48,11 @@ private:
     bool _canWalkIn;
     int _nbDiamands;
     bool _ennemiPresent;
+    direction _priorDirection;
     void lookingForDiamands(direction incomingOrder);
     void lookingForTrolley(direction incomingOrder);
     void lookingForTarget(direction incomingOrder);
-    void lookingForMud(direction incomingOrder);
+    void lookingForStone(direction incomingOrder);
     void lookingForInactive(direction incomingOrder);
     
 };
