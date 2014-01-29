@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 {
     string name = "SuperMonchu";
     // give the minor name
-    cout << name << "\n";
+    puts(name.c_str());
     log("Minor :" + name + " join the game");
     // init map
     Mine myMine;

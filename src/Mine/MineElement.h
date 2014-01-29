@@ -34,7 +34,7 @@ public:
     virtual ~MineElement();
     Status _myStatus;
     bool askNeighbours(direction from, objectives obj, direction prior=DIR_NONE);
-    void reset();
+    void reset(bool isGlobalReset);
     void refresh(string gender, int turn, int diamand);
     void registerNeighbour(MineElement* element, direction where);
     void setEnnemies();

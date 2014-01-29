@@ -5,25 +5,27 @@ cmake_minimum_required(VERSION 2.6)
 
 project(GoldRush)
 
-# the name of the target operating system
-SET(CMAKE_SYSTEM_NAME Windows)
+# Initialize CXXFLAGS.
+ set(CMAKE_CXX_FLAGS                "-Wall -std=c++11")
+ set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g")
+ set(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+ set(CMAKE_CXX_FLAGS_RELEASE        "-O4 -DNDEBUG")
+ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
-# which compilers to use for C and C++
-SET(CMAKE_C_COMPILER i586-mingw32msvc-gcc)
-SET(CMAKE_CXX_COMPILER i586-mingw32msvc-g++)
-SET(CMAKE_RC_COMPILER i586-mingw32msvc-windres)
-
-# here is the target environment located
-SET(CMAKE_FIND_ROOT_PATH  /usr/i586-mingw32msvc /home/alex/mingw-install )
-
-# adjust the default behaviour of the FIND_XXX() commands:
-# search headers and libraries in the target environment, search 
-# programs in the host environment
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-
+# Compiler-specific C++11 activation.
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+    execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    if (NOT (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7))
+        message(FATAL_ERROR "${PROJECT_NAME} requires g++ 4.7 or greater.")
+    endif ()
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+else ()
+    message(FATAL_ERROR "Your C++ compiler does not support C++11.")
+endif ()
 set(EXECUTABLE_OUTPUT_PATH bin/${CMAKE_BUILD_TYPE})
+
 
 #Configuration de l'exécutable
 

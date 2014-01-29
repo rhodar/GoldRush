@@ -52,8 +52,6 @@ void Mine::Init()
         {
             for (int l = 0; l < _longueur; l++)
             {
-                /*            stringstream name;
-                            name << h << "/" << l;*/
                 _mineMap[h][l] = new MineElement();
                 _mineMap[h][l]->setPosition(l, h);
             }
@@ -112,52 +110,66 @@ void Mine::runRound()
             _end = true;
         }
 
-        ResetMapScore();
+        ResetMapScore(true);
 
         string str;
         getline(cin, str);
         vector<string> vecXYN = ParseMessage(str);
-
-        log("Turn init : x = " + vecXYN.at(0) + "y = " + vecXYN.at(1) + " nb players = " + vecXYN.at(2));
-        // if it's not the first turn and that the location is not a good one
-        if (_nbTour > 0 && !_myMinor.evalExpectedLocation(atoi(vecXYN.at(0).c_str()), atoi(vecXYN.at(1).c_str())))
+        if (vecXYN.size() == 3)
         {
-            log(" >>> ERROR incorrect Y/X value : " + vecXYN.at(1) + "/" + vecXYN.at(0));
-            cout << "\n";
-        }
-        else
-        {
-
-            // set the minor position
-            _myMinor.setPosition(vecXYN.at(0), vecXYN.at(1));
-            log("Minor new position = [" + vecXYN.at(1) + "/" + vecXYN.at(0) + "]");
-            // get initial position to remember our trolley
-            if (_nbTour == 0)
+            log("Turn init : x = " + vecXYN.at(0) + "y = " + vecXYN.at(1) + " nb players = " + vecXYN.at(2));
+            // if it's not the first turn and that the location is not a good one
+            if (_nbTour > 0 && !_myMinor.evalExpectedLocation(atoi(vecXYN.at(0).c_str()), atoi(vecXYN.at(1).c_str())))
             {
-                log("Trolley pos(" + vecXYN.at(1) + "/" + vecXYN.at(0) + ")");
-                _myMinor._trolley.setPosition(vecXYN.at(0), vecXYN.at(1));
-                _mineMap[atoi(vecXYN.at(1).c_str())][atoi(vecXYN.at(0).c_str())]->isTheTrolley = true;
+                log(" >>> ERROR incorrect Y/X value : " + vecXYN.at(1) + "/" + vecXYN.at(0));
             }
-            // refresh the 5x5 map detail
-            vector<string> details = getMapDetails();
-            RefreshMapData(details);
-            // set ennemies on map
-            setEnnemies(atoi(vecXYN.at(2).c_str()));
-            
-            // display the whole computed map
-            DisplayMap();
-
-            // if we can shoot
-            if (!findTarget())
+            else
             {
-                if (_myMinor._nbDiamandInMyPocket > 0 && _myMinor._nbDiamandInMyPocket < 3)
+                // set the minor position
+                _myMinor.setPosition(vecXYN.at(0), vecXYN.at(1));
+                log("Minor new position = [" + vecXYN.at(1) + "/" + vecXYN.at(0) + "]");
+                // get initial position to remember our trolley
+                if (_nbTour == 0)
                 {
-                    log("still have some emptiness in my pocket");
-                    // give order to find Diamant
-                    if (!findDiamand())
+                    log("Trolley pos(" + vecXYN.at(1) + "/" + vecXYN.at(0) + ")");
+                    _myMinor._trolley.setPosition(vecXYN.at(0), vecXYN.at(1));
+                    _mineMap[atoi(vecXYN.at(1).c_str())][atoi(vecXYN.at(0).c_str())]->isTheTrolley = true;
+                }
+                // refresh the 5x5 map detail
+                vector<string> details = getMapDetails();
+                RefreshMapData(details);
+                // set ennemies on map
+                setEnnemies(atoi(vecXYN.at(2).c_str()));
+
+                // display the whole computed map
+                DisplayMap();
+
+                // if we can shoot
+                if (!findTarget(atoi(vecXYN.at(2).c_str())))
+                {
+                    if (_myMinor._nbDiamandInMyPocket > 0 && _myMinor._nbDiamandInMyPocket < 3)
                     {
-                        log("fuck that diamands at least save my pocket's one");
-                        // try to found the trolley
+                        log("still have some emptiness in my pocket");
+                        // give order to find Diamant
+                        if (!findDiamand())
+                        {
+                            log("fuck that diamands at least save my pocket's one");
+                            // try to found the trolley
+                            if (!findTrolley())
+                            {
+                                log("ok i'm bored go for AFK");
+                                if (!findInactive())
+                                {
+                                    log("Need to move something");
+                                    findStoneToMove();
+                                }
+                            }
+                        }
+                    }
+                    else if (_myMinor._nbDiamandInMyPocket >= 3)
+                    {
+                        log("pockets full of shiiit");
+                        // try to find the trolley
                         if (!findTrolley())
                         {
                             log("ok i'm bored go for AFK");
@@ -168,36 +180,26 @@ void Mine::runRound()
                             }
                         }
                     }
-                }
-                else if (_myMinor._nbDiamandInMyPocket >= 3)
-                {
-                    log("pockets full of shiiit");
-                    // try to find the trolley
-                    if (!findTrolley())
+                    else
                     {
-                        log("ok i'm bored go for AFK");
-                        if (!findInactive())
+                        log("go pick some chicks");
+                        if (!findDiamand())
                         {
-                            log("Need to move something");
-                            findStoneToMove();
+                            log("ok i'm bored go for AFK");
+                            if (!findInactive())
+                            {
+                                log("Need to move something");
+                                findStoneToMove();
+                            }
                         }
                     }
                 }
-                else
-                {
-                    log("go pick some chicks");
-                    if (!findDiamand())
-                    {
-                        log("ok i'm bored go for AFK");
-                        if (!findInactive())
-                        {
-                            log("Need to move something");
-                            findStoneToMove();
-                        }
-                    }
-                }
+                _nbTour++;
             }
-            _nbTour++;
+        }
+        else
+        {
+            log("Turn init failed : "+str);
         }
     }
 }
@@ -227,8 +229,14 @@ void Mine::setEnnemies(int nbEnnemies)
         getline(cin, tmp);
         vector<string> vecEnnemieXY = ParseMessage(tmp);
         log(tmp);
-
-        _mineMap[atoi(vecEnnemieXY.at(1).c_str())][atoi(vecEnnemieXY.at(0).c_str())]->setEnnemies();
+        if (vecEnnemieXY.size() == 2)
+        {
+            _mineMap[atoi(vecEnnemieXY.at(1).c_str())][atoi(vecEnnemieXY.at(0).c_str())]->setEnnemies();
+        }
+        else
+        {
+            log("Ennemie definition failed");
+        }
     }
 }
 
@@ -292,13 +300,13 @@ int Mine::getRatio(int input)
     return ret;
 }
 
-void Mine::ResetMapScore()
+void Mine::ResetMapScore(bool isGlobalReset)
 {
     for (int h = 0; h < _hauteur; h++)
     {
         for (int l = 0; l < _longueur; l++)
         {
-            _mineMap[h][l]->reset();
+            _mineMap[h][l]->reset(isGlobalReset);
         }
     }
 }
@@ -306,7 +314,7 @@ void Mine::ResetMapScore()
 void Mine::MoveToDirection(direction dir)
 {
     log(" <<<<<<<<<  Go to the " + getDirection(dir));
-    cout << getDirection(dir) << "\n";
+    puts(getDirection(dir).c_str());
     _myMinor.lookingDirection = dir;
     // on movement reinit the backtraced way
     _nextStep = expectedNextStep();
@@ -336,7 +344,7 @@ bool Mine::findDiamand()
         {
             log("Pick diamants");
             // pick diamants
-            cout << PICK_ORDER << "\n";
+            puts(PICK_ORDER);
             _myMinor._nbDiamandInMyPocket += tempStatus.diamants;
             if (_myMinor._nbDiamandInMyPocket > 3)
             {
@@ -375,7 +383,7 @@ bool Mine::findTrolley()
         {
             log("drop diamants");
             // pick diamants
-            cout << DROP_ORDER << "\n";
+            puts(DROP_ORDER);
             _myMinor._nbInDaTrolley += _myMinor._nbDiamandInMyPocket;
             _myMinor._nbDiamandInMyPocket = 0;
             _myMinor.computeExpectedLocation();
@@ -386,20 +394,23 @@ bool Mine::findTrolley()
     return ret;
 }
 
-bool Mine::findTarget()
+bool Mine::findTarget(int nbEnnemies)
 {
-    log("Find target");
     bool ret = false;
-    ResetMapScore();
-    if (_mineMap[_myMinor.getPositionY()][_myMinor.getPositionX()]->askNeighbours(_myMinor.lookingDirection, OBJ_TARGET, _nextStep))
+    if (nbEnnemies > 0)
     {
-        ret = true;
-        log("Shoot target");
-        // pick diamants
-        cout << SHOOT_ORDER << "\n";
-        _myMinor.computeExpectedLocation();
-        //on action reset the backtraceway
-        _nextStep = DIR_NONE;
+        log("Find target");
+        ResetMapScore();
+        if (_mineMap[_myMinor.getPositionY()][_myMinor.getPositionX()]->askNeighbours(_myMinor.lookingDirection, OBJ_TARGET, _nextStep))
+        {
+            ret = true;
+            log("Shoot target");
+            // pick diamants
+            puts(SHOOT_ORDER);
+            _myMinor.computeExpectedLocation();
+            //on action reset the backtraceway
+            _nextStep = DIR_NONE;
+        }
     }
     return ret;
 }
@@ -467,9 +478,9 @@ void Mine::DisplayMap()
         string line = "";
         for (int j = 0; j < _longueur; j++)
         {
-            if(i== _myMinor.getPositionY()  && j == _myMinor.getPositionX())
+            if (i == _myMinor.getPositionY() && j == _myMinor.getPositionX())
             {
-               line+="0" ;
+                line += "0";
             }
             else if (_mineMap[i][j]->_myStatus.isActive)
             {

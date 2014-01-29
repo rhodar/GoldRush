@@ -50,7 +50,7 @@ private:
     
     void RegisterElements();
     void RefreshMapData(vector<string> mapDetails);
-    void ResetMapScore();
+    void ResetMapScore(bool isGlobalReset = false);
     map< int, map< int, MineElement* > > _mineMap;
     int getRatio(int input);
     
@@ -59,7 +59,7 @@ private:
     void MoveToDirection(direction dir);
     bool findDiamand();
     bool findTrolley();
-    bool findTarget();
+    bool findTarget(int nbEnnemies);
     bool findInactive();
     bool findStoneToMove();
     direction expectedNextStep();

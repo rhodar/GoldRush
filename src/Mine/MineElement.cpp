@@ -143,13 +143,16 @@ bool MineElement::computeScore(Status neighbourStatus)
     return ret;
 }
 
-void MineElement::reset()
+void MineElement::reset(bool isGlobalReset)
 {
     _myStatus.scoreDir = DIR_NONE;
     _myStatus.myScore = -1;
     _myStatus.diamants = 0;
     _myStatus.asked = false;
-    _ennemiPresent = false;
+    if(isGlobalReset)
+    {
+        _ennemiPresent = false;
+    }
 }
 
 void MineElement::refresh(string gender, int turn, int diamand)
@@ -240,25 +243,11 @@ void MineElement::lookingForTrolley(direction incomingOrder)
     {
         // prior compute expected way
         stringstream logline;
-        switch (_priorDirection)
+        if ((int) _priorDirection != (int) DIR_NONE)
         {
-        case DIR_NONE:
-            // do nothing
-            logline << "[" << display() << "] >>> NONE ";
-            log(logline.str());
-            break;
-        case DIR_NORTH:
-        case DIR_SOUTH:
-        case DIR_WEST:
-        case DIR_EAST:
             _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
             logline << "[" << display() << "] >>> prior that way " << getDirection(_priorDirection) << " ( " << _priorDirection << ")";
             log(logline.str());
-            break;
-        }
-        if ((int) _priorDirection != (int) DIR_NONE)
-        {
-
         }
         _myStatus.asked = true;
         for (map<int, MineElement *>::iterator it = _neighbours.begin(); it != _neighbours.end(); it++)
