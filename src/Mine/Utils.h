@@ -29,10 +29,11 @@ typedef enum {
 
 typedef enum {
     OBJ_DIAMANDS, // we don't yet have 3 diamands in our pocket
-    OBJ_TROLLEY, // we have 3 diamands in our pocket
-    OBJ_TARGET, // we are looking for a target to shoot
-    OBJ_STONE, // we can't do anything so we're lookong to a stone to moove
-    OBJ_INACTIVE // find out inactive case to be refreshed  
+    OBJ_TROLLEY,  // we have 3 diamands in our pocket
+    OBJ_TARGET,   // we are looking for a target to shoot
+    OBJ_STONE,    // we can't do anything so we're lookong to a stone to moove
+    OBJ_INACTIVE, // find out inactive case to be refreshed  
+    OBJ_MUD
 } objectives;
 
 static void log(string message) {
@@ -88,43 +89,39 @@ static direction getOpositeDirection(direction initialDirection) {
     return ret;
 }
 
-static vector<string> ParseMessage(string input)
-{
+static vector<string> ParseMessage(string input) {
     vector<string> parsedMsg;
     string parsed;
     stringstream ss(input);
-    while (getline(ss, parsed, ' '))
-    {
+    while (getline(ss, parsed, ' ')) {
         parsedMsg.push_back(parsed);
     }
     return parsedMsg;
 }
 
-static Positionable backTraceTravel(direction dir, int x, int y)
-{
+static Positionable backTraceTravel(direction dir, int x, int y) {
     Positionable ret;
     // set with current position
-    ret.setPosition(x , y);
-       
-    switch (dir)
-    {
-    case DIR_EAST:
-        ret.setPosition(ret.getPositionX()+1,ret.getPositionY());
-        break;
-    case DIR_WEST:
-        ret.setPosition(ret.getPositionX()-1,ret.getPositionY());
-        break;
-    case DIR_SOUTH:
-        ret.setPosition(ret.getPositionX(),ret.getPositionY()+1);
-        break;
-    case DIR_NORTH:
-        ret.setPosition(ret.getPositionX(),ret.getPositionY()-1);
-        break;
-    default:
-        
-        break;
+    ret.setPosition(x, y);
+
+    switch (dir) {
+        case DIR_EAST:
+            ret.setPosition(ret.getPositionX() + 1, ret.getPositionY());
+            break;
+        case DIR_WEST:
+            ret.setPosition(ret.getPositionX() - 1, ret.getPositionY());
+            break;
+        case DIR_SOUTH:
+            ret.setPosition(ret.getPositionX(), ret.getPositionY() + 1);
+            break;
+        case DIR_NORTH:
+            ret.setPosition(ret.getPositionX(), ret.getPositionY() - 1);
+            break;
+        default:
+
+            break;
     }
- 
+
     return ret;
 }
 

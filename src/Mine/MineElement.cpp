@@ -31,14 +31,10 @@ MineElement::~MineElement()
 {
 }
 
-bool MineElement::askNeighbours(direction whoAmIForHim, objectives obj, direction prior)
+bool MineElement::askNeighbours(direction whoAmIForHim, objectives obj)
 {
     bool ret = false;
     _myStatus.obj = obj;
-    _priorDirection = prior;
-    stringstream logline;
-    logline << "[ " << display() << " ] >>> prior = " << prior << " ( " << getDirection(prior) << ")";
-    log(logline.str());
     direction incomingOrder = getOpositeDirection(whoAmIForHim);
     switch (obj)
     {
@@ -53,6 +49,9 @@ bool MineElement::askNeighbours(direction whoAmIForHim, objectives obj, directio
         break;
     case OBJ_INACTIVE:
         lookingForInactive(incomingOrder);
+        break;
+    case OBJ_MUD:
+        lookingForMudNeirStone(incomingOrder);
         break;
     case OBJ_DIAMANDS:
     default:
@@ -98,14 +97,16 @@ void MineElement::computeMyScore()
         }
         break;
     case OBJ_STONE:
+    case OBJ_MUD:
     default:
+        // Hard coded !!! 
         break;
     }
 }
 
 bool MineElement::computeScore(Status neighbourStatus)
 {
-    bool ret = false;
+    bool keepIt = false;
     /**
      * If the score is better there take its score
      * If the score is equal but more diamants take its score
@@ -117,7 +118,6 @@ bool MineElement::computeScore(Status neighbourStatus)
     int myDiam = _myStatus.diamants;
     int itsDiam = neighbourStatus.diamants;
 
-    bool keepIt = false;
 
     if (itsScore < myScore || myScore == -1)
     {
@@ -136,11 +136,11 @@ bool MineElement::computeScore(Status neighbourStatus)
 
     if (keepIt)
     {
+
         _myStatus.myScore = itsScore;
         _myStatus.diamants = itsDiam;
-        ret = true;
     }
-    return ret;
+    return keepIt;
 }
 
 void MineElement::reset(bool isGlobalReset)
@@ -149,7 +149,7 @@ void MineElement::reset(bool isGlobalReset)
     _myStatus.myScore = -1;
     _myStatus.diamants = 0;
     _myStatus.asked = false;
-    if(isGlobalReset)
+    if (isGlobalReset)
     {
         _ennemiPresent = false;
     }
@@ -157,10 +157,6 @@ void MineElement::reset(bool isGlobalReset)
 
 void MineElement::refresh(string gender, int turn, int diamand)
 {
-    /*
-    stringstream logline;
-    logline << "[" << display() << "] >> Refresh (" << gender << ", " << turn << ", " << diamand;
-    log(logline.str());*/
     _gender = gender;
     _myStatus.lastTurnUpdate = turn;
     _myStatus.isActive = true;
@@ -168,6 +164,10 @@ void MineElement::refresh(string gender, int turn, int diamand)
     if (gender == EMPTY_SIGNE || gender == MUD_SIGNE || isTheTrolley)
     {
         _canWalkIn = true;
+    }
+    else
+    {
+        _canWalkIn = false;
     }
 
 }
@@ -179,7 +179,7 @@ void MineElement::registerNeighbour(MineElement* element, direction where)
 
 void MineElement::setEnnemies()
 {
-    log("[" + display() + "]>> Ennemi present");
+    log(display() + ">> Ennemi present");
     _ennemiPresent = true;
 }
 
@@ -202,8 +202,11 @@ void MineElement::lookingForDiamands(direction incomingOrder)
         // prior compute expected way
         if (_priorDirection != DIR_NONE)
         {
-            log("[" + display() + "] >>> prior that way " + getDirection(_priorDirection));
-            _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
+            log(display() + " >>> prior that way " + getDirection(_priorDirection));
+            if (_neighbours.find(_priorDirection) != _neighbours.end())
+            {
+                _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
+            }
         }
 
         for (map<int, MineElement *>::iterator it = _neighbours.begin(); it != _neighbours.end(); it++)
@@ -213,7 +216,7 @@ void MineElement::lookingForDiamands(direction incomingOrder)
                 if (it->second->askNeighbours(direction(it->first), _myStatus.obj))
                 {
                     stringstream logline;
-                    logline << "[" << display() << "] >> found out something on " <<
+                    logline << display() << "  >> found out something on " <<
                             getDirection(direction(it->first)) << "(" << it->second->_myStatus.myScore << ")";
                     log(logline.str());
                     if (computeScore(it->second->_myStatus))
@@ -235,7 +238,7 @@ void MineElement::lookingForTrolley(direction incomingOrder)
      *  - we can't go throw this element
      *  - we are already asked
      */
-    if (isTheTrolley > 0 || !_canWalkIn || !_myStatus.isActive || _myStatus.asked)
+    if (isTheTrolley == true || !_canWalkIn || !_myStatus.isActive || _myStatus.asked)
     {
         computeMyScore();
     }
@@ -243,11 +246,14 @@ void MineElement::lookingForTrolley(direction incomingOrder)
     {
         // prior compute expected way
         stringstream logline;
-        if ((int) _priorDirection != (int) DIR_NONE)
+        if (_priorDirection != DIR_NONE)
         {
-            _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
-            logline << "[" << display() << "] >>> prior that way " << getDirection(_priorDirection) << " ( " << _priorDirection << ")";
-            log(logline.str());
+            if (_neighbours.find(_priorDirection) != _neighbours.end())
+            {
+                _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
+                logline << display() << " >>> prior that way " << getDirection(_priorDirection) << " ( " << _priorDirection << ")";
+                log(logline.str());
+            }
         }
         _myStatus.asked = true;
         for (map<int, MineElement *>::iterator it = _neighbours.begin(); it != _neighbours.end(); it++)
@@ -257,8 +263,8 @@ void MineElement::lookingForTrolley(direction incomingOrder)
                 if (it->second->askNeighbours(direction(it->first), _myStatus.obj))
                 {
                     stringstream logline;
-                    logline << "[" << display() << "] >> found out something on " <<
-                            getDirection(direction(it->first)) << "(" << it->second->_myStatus.myScore << ")";
+                    logline << display() << "  >> found out something on " <<
+                            getDirection(direction(it->first)) << "(" << (it->second->_myStatus.myScore+1) << ")";
                     log(logline.str());
                     if (computeScore(it->second->_myStatus))
                     {
@@ -280,22 +286,25 @@ void MineElement::lookingForTarget(direction directionToShoot)
      *  - we can't go throw this element
      *  - we are already asked
      */
-    if (_ennemiPresent || !_canWalkIn || !_myStatus.isActive || _myStatus.asked)
+    if (_ennemiPresent || _gender == MUD_SIGNE ||!_canWalkIn || !_myStatus.isActive || _myStatus.asked)
     {
         computeMyScore();
     }
     else
     {
         _myStatus.asked = true;
-        if (_neighbours[directionToShoot]->askNeighbours(directionToShoot, _myStatus.obj))
+        if (_neighbours.find(directionToShoot) != _neighbours.end())
         {
-            stringstream logline;
-            logline << "[" << display() << "] >> found out something on " <<
-                    getDirection(directionToShoot) << "(" << _neighbours[directionToShoot]->_myStatus.myScore << ")";
-            log(logline.str());
-            if (computeScore(_neighbours[directionToShoot]->_myStatus))
+            if (_neighbours[directionToShoot]->askNeighbours(directionToShoot, _myStatus.obj))
             {
-                _myStatus.scoreDir = directionToShoot;
+                stringstream logline;
+                logline << display() << " >> found out something on " <<
+                        getDirection(directionToShoot) << "(" << _neighbours[directionToShoot]->_myStatus.myScore << ")";
+                log(logline.str());
+                if (computeScore(_neighbours[directionToShoot]->_myStatus))
+                {
+                    _myStatus.scoreDir = directionToShoot;
+                }
             }
         }
     }
@@ -309,48 +318,47 @@ void MineElement::lookingForStone(direction incomingOrder)
      *  - we can't go throw this element
      *  - we are already asked
      */
-    if (!_canWalkIn || !_myStatus.isActive || _myStatus.asked)
+
+    _myStatus.asked = true;
+    if (_gender != STONE_SIGNE)
     {
-        _myStatus.myScore = -1;
-        _myStatus.scoreDir = DIR_NONE;
-    }
-    else
-    {
-        _myStatus.asked = true;
-        if (_gender != STONE_SIGNE)
+        // prior compute expected way
+        if (_priorDirection != DIR_NONE)
         {
-            // prior compute expected way
-            if (_priorDirection != DIR_NONE)
+            if (_neighbours.find(_priorDirection) != _neighbours.end())
             {
-                log("[" + display() + "] >>> prior that way " + getDirection(_priorDirection));
+                log(display() + " >>> prior that way " + getDirection(_priorDirection));
                 _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
             }
-            for (map<int, MineElement *>::iterator it = _neighbours.begin(); it != _neighbours.end(); it++)
+        }
+        for (map<int, MineElement *>::iterator it = _neighbours.begin(); it != _neighbours.end(); it++)
+        {
+            if (it->first != incomingOrder)
             {
-                if (it->first != incomingOrder)
+                if (it->second->askNeighbours(direction(it->first), _myStatus.obj))
                 {
-                    if (it->second->askNeighbours(direction(it->first), _myStatus.obj))
+                    stringstream logline;
+                    logline << display() << "  >> found out something on " <<
+                            getDirection(direction(it->first)) << "(" << it->second->_myStatus.myScore << ")";
+                    log(logline.str());
+                    if (computeScore(it->second->_myStatus))
                     {
-                        stringstream logline;
-                        logline << "[" << display() << "] >> found out something on " <<
-                                getDirection(direction(it->first)) << "(" << it->second->_myStatus.myScore << ")";
-                        log(logline.str());
-                        if (computeScore(it->second->_myStatus))
-                        {
-                            _myStatus.scoreDir = direction(it->first);
-                        }
+                        _myStatus.scoreDir = direction(it->first);
                     }
                 }
             }
         }
-        else
+    }
+    else
+    {
+        if (_neighbours.find(getOpositeDirection(incomingOrder)) != _neighbours.end())
         {
-            if (_neighbours[getOpositeDirection(incomingOrder)]->getGender() == EMPTY_SIGNE)
+            if ((_neighbours[getOpositeDirection(incomingOrder)]->getGender() == EMPTY_SIGNE) &&
+                    ((_neighbours[incomingOrder]->getGender() == EMPTY_SIGNE) || (_neighbours[incomingOrder]->getGender() == MUD_SIGNE) || (_neighbours[incomingOrder]->isTheTrolley)))
             {
                 _myStatus.myScore = 0;
                 _myStatus.scoreDir = getOpositeDirection(incomingOrder);
             }
-
         }
     }
 }
@@ -373,9 +381,11 @@ void MineElement::lookingForInactive(direction incomingOrder)
         // prior compute expected way
         if (_priorDirection != DIR_NONE)
         {
-            _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
-            log("[" + display() + "] >>> prior that way " + getDirection(_priorDirection));
-
+            if (_neighbours.find(_priorDirection) != _neighbours.end())
+            {
+                _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
+                log(display() + " >>> prior that way " + getDirection(_priorDirection));
+            }
         }
         for (map<int, MineElement *>::iterator it = _neighbours.begin(); it != _neighbours.end(); it++)
         {
@@ -384,7 +394,7 @@ void MineElement::lookingForInactive(direction incomingOrder)
                 if (it->second->askNeighbours(direction(it->first), _myStatus.obj))
                 {
                     stringstream logline;
-                    logline << "[" << display() << "] >> found out something on " <<
+                    logline << display() << " >> found out something on " <<
                             getDirection(direction(it->first)) << "(" << it->second->_myStatus.myScore << ")";
                     log(logline.str());
                     if (computeScore(it->second->_myStatus))
@@ -397,3 +407,87 @@ void MineElement::lookingForInactive(direction incomingOrder)
     }
 }
 
+void MineElement::lookingForMudNeirStone(direction incomingOrder)
+{
+    log(display());
+    /**
+     * Stop looking for an objective if :
+     *  - we are inactive
+     *  - we can't go throw this element
+     *  - we are already asked
+     */
+    if (!_canWalkIn || !_myStatus.isActive || _myStatus.asked)
+    {
+        _myStatus.myScore = -1;
+        _myStatus.scoreDir = DIR_NONE;
+    }
+    else
+    {
+        _myStatus.asked = true;
+        if (_gender != MUD_SIGNE)
+        {
+            log(display() + " NOT MUD");
+            // prior compute expected way
+            if (_priorDirection != DIR_NONE)
+            {
+                if (_neighbours.find(_priorDirection) != _neighbours.end())
+                {
+                    log(display() + " >>> prior that way " + getDirection(_priorDirection));
+                    _neighbours[_priorDirection]->askNeighbours(_priorDirection, _myStatus.obj);
+                }
+            }
+            for (map<int, MineElement *>::iterator it = _neighbours.begin(); it != _neighbours.end(); it++)
+            {
+                if (it->first != incomingOrder)
+                {
+                    if (it->second->askNeighbours(direction(it->first), _myStatus.obj))
+                    {
+                        stringstream logline;
+                        logline << display() << " >> found out something on " <<
+                                getDirection(direction(it->first)) << "(" << it->second->_myStatus.myScore << ")";
+                        log(logline.str());
+                        if (computeScore(it->second->_myStatus))
+                        {
+                            _myStatus.scoreDir = direction(it->first);
+                            log("choose => " + getDirection(direction(it->first)));
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            log(display() + " HERE MUD ");
+            if (_neighbours.find(getOpositeDirection(incomingOrder)) != _neighbours.end())
+            {
+                if (_neighbours[getOpositeDirection(incomingOrder)]->getGender() == STONE_SIGNE)
+                {
+                    _myStatus.myScore = 1;
+                    _myStatus.scoreDir = getOpositeDirection(incomingOrder);
+                }
+            }
+        }
+    }
+}
+
+void MineElement::savePriorDirection()
+{
+    if (_neighbours.find(_myStatus.scoreDir) != _neighbours.end())
+    {
+        _priorDirection = _myStatus.scoreDir;
+    }
+    else
+    {
+        resetPriorDirection();
+    }
+}
+
+void MineElement::resetPriorDirection()
+{
+    _priorDirection = DIR_NONE;
+}
+
+string MineElement::display()
+{
+    return _gender + " " + Positionable::display();
+}

@@ -36,7 +36,7 @@ public:
         _x = x;
         _y = y;
         stringstream name;
-        name << _y << "/"<<_x;
+        name << "[" <<_y << "/"<<_x << "]";
         _display=name.str();
     }
 

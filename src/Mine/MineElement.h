@@ -33,13 +33,16 @@ public:
     MineElement();
     virtual ~MineElement();
     Status _myStatus;
-    bool askNeighbours(direction from, objectives obj, direction prior=DIR_NONE);
+    bool askNeighbours(direction from, objectives obj);
     void reset(bool isGlobalReset);
     void refresh(string gender, int turn, int diamand);
+    void savePriorDirection();
+    void resetPriorDirection();
     void registerNeighbour(MineElement* element, direction where);
     void setEnnemies();
     string getGender(){return _gender;};
     bool isTheTrolley;
+    virtual string display();
 private:
     map<int, MineElement*> _neighbours;
     void computeMyScore();
@@ -54,6 +57,7 @@ private:
     void lookingForTarget(direction incomingOrder);
     void lookingForStone(direction incomingOrder);
     void lookingForInactive(direction incomingOrder);
+    void lookingForMudNeirStone(direction incomingOrder);
     
 };
 

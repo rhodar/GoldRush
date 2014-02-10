@@ -62,12 +62,13 @@ private:
     bool findTarget(int nbEnnemies);
     bool findInactive();
     bool findStoneToMove();
-    direction expectedNextStep();
+    bool findMudNeirStone();
+    void saveMapPriorDirection();
+    void resetMapPriorDirection();
     //decode string input from cin
     bool initMineMap(vector<string> vec);
     
     void DisplayMap();
-    direction _nextStep;
 };
 
 #endif	/* MINE_H */
